@@ -2,7 +2,7 @@
 As part of my ongoing journey in the tech field, this task is part of my participation in the HNG Internship.
 
 ## Streamlining User and Group Management with a Bash Script
-Managing user accounts and groups can be a repetitive and time-consuming task. This Bash script automates the process of creating users and groups, setting up home directories, generating random passwords, and logging all actions for easy auditing.. It is designed to simplify user and group management in a Linux environment
+Managing user accounts and groups can be a repetitive and time-consuming task. This Bash script automates the process of creating users and groups, setting up home directories, generating random passwords, and logging all actions for easy auditing. It is designed to simplify user and group management in a Linux environment.
 
 - **Root Privileges**: This script must be run as root.
 - **Input File**: A text file containing usernames and group names in the format `user;groups`.
