@@ -24,6 +24,7 @@ fi
 LOG_FILE="/var/log/user_management.log"
 
 if [ ! -f "$LOG_FILE" ]; then
+    # Create the log file
     sudo touch "$LOG_FILE"
     echo "$LOG_FILE has been created."
 else
@@ -36,6 +37,7 @@ PASSWORD_FILE="/var/secure/user_passwords.txt"
 if [ ! -d /var/secure ]; then
     sudo mkdir -p /var/secure
     sudo touch "$PASSWORD_FILE"
+    # Set ownership permissions for PASSWORD_FILE
     sudo chmod 700 /var/secure
 fi
 
@@ -44,18 +46,19 @@ generate_password() {
     openssl rand -base64 12
 }
 
-echo "------------------------------------------------------"
+echo "----------------------------------------"
 echo "Generating Users and Groups"
-echo "------------------------------------------------------"
+echo "----------------------------------------"
 
 # Read the file line by line and process
 while IFS=';' read -r username groups; do
+    # Extract the user name and groups, remove leading and trailing whitespaces
     username=$(echo "$username" | xargs)
     groups=$(echo "$groups" | xargs)
 
     echo "Processing user: $username" | tee -a $LOG_FILE
 
-    # Create the personal group for the user
+    # Create the personal group for the user if it doesn't exist
     if ! getent group "$username" > /dev/null 2>&1; then
         sudo groupadd "$username"
         echo "Group $username created" | tee -a $LOG_FILE
@@ -66,18 +69,22 @@ while IFS=';' read -r username groups; do
     # Initialize an array to hold the additional groups
     group_array=()
     for group in $(echo "$groups" | tr ',' ' '); do
-        group=$(echo "$group" | xargs)
+        group=$(echo "$group" | xargs)  # Remove any extra whitespace
+
+        # Check if the group exists
         if getent group "$group" > /dev/null 2>&1; then
             group_array+=("$group")
         else
-            echo "Invalid group name: $group" | tee -a $LOG_FILE
+            sudo groupadd "$group"
+            echo "Group $group created" | tee -a $LOG_FILE
+            group_array+=("$group")
         fi
     done
 
     # Join the group array into a comma-separated string
     more_groups=$(IFS=','; echo "${group_array[*]}")
 
-    # Create the user
+    # Create the user if it doesn't exist, otherwise ensure they are added to the groups
     if ! id -u "$username" > /dev/null 2>&1; then
         sudo useradd -m -g "$username" -G "$more_groups" "$username" &>/dev/null
         if [[ $? -eq 0 ]]; then
@@ -88,6 +95,8 @@ while IFS=';' read -r username groups; do
             echo "$username:$password" | sudo chpasswd
             if [[ $? -eq 0 ]]; then
                 echo "Password for $username set" | tee -a $LOG_FILE
+
+                # Store the password securely
                 echo "$username,$password" >> $PASSWORD_FILE
             else
                 echo "Failed to set password for user $username" | tee -a $LOG_FILE
@@ -102,8 +111,11 @@ while IFS=';' read -r username groups; do
         fi
     else
         echo "User $username already exists" | tee -a $LOG_FILE
+        sudo usermod -aG "$more_groups" "$username"
+        echo "User $username added to groups: $more_groups" | tee -a $LOG_FILE
     fi
 
 done < "$USER_LIST"
 
+# Log the script execution to standard output
 echo "User creation process completed. Logs can be found at $LOG_FILE."
