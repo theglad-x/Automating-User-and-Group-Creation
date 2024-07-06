@@ -41,7 +41,9 @@ The script performs the following tasks:
 3. **Sets Up Log and Password Files**: Creates log and password files if they do not exist and sets appropriate permissions.
 4. **Generates a Random Password**: Uses OpenSSL to generate a random password.
 5. **Processes the Input File**: Reads the input file line by line, creates the necessary groups, adds users to the specified groups, generates passwords, sets up home directories, and logs all actions.
-
+6. **Verifies Group Membership**: Ensures users are added to all specified groups even if they already exist.
+7. **Creates Groups if Not Exist**: Creates groups that do not exist before adding users to them.
+   
 ## Logging
 
 - Actions are logged to `/var/log/user_management.log`.
